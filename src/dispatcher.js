@@ -17,7 +17,7 @@ function getHostname(url) {
 async function getOrCreateQueue(hostname) {
   if (queues.has(hostname)) return queues.get(hostname);
 
-  const queue = new Queue(`anthill:host:${hostname}`, {
+  const queue = new Queue(`anthill/host/${hostname}`, {
     connection: { host: config.redis.host, port: config.redis.port },
     defaultJobOptions: {
       removeOnComplete: { count: 100 },

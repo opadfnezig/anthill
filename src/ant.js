@@ -4,7 +4,7 @@ import config from './config.js';
 import { storeResult, setStatus } from './store.js';
 import { fetchWithAxios, fetchWithUndici } from './fetchers/http.js';
 import { fetchBrowser, closeBrowsers } from './fetchers/browser.js';
-import { loadProxies } from './proxy.js';
+import { loadProxies, getNextProxyForEngine } from './proxy.js';
 
 const workers = new Map();
 let redis;
@@ -14,6 +14,11 @@ async function processJob(job) {
   const { jobId, url, engine = 'axios', ...opts } = job.data;
 
   await setStatus(jobId, 'active');
+
+  // Resolve proxy: true → engine-appropriate proxy config
+  if (opts.proxy === true) {
+    opts.proxy = getNextProxyForEngine(engine);
+  }
 
   let result;
   switch (engine) {
@@ -37,7 +42,7 @@ function attachHost(hostname) {
   if (workers.has(hostname)) return;
 
   const worker = new Worker(
-    `anthill:host:${hostname}`,
+    `anthill/host/${hostname}`,
     processJob,
     {
       connection: { host: config.redis.host, port: config.redis.port },

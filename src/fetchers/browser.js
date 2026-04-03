@@ -40,6 +40,8 @@ function buildProxyStr(proxy) {
   if (!proxy) return null;
   if (typeof proxy === 'string') return proxy;
   const { protocol = 'socks5', host, port } = proxy;
+  // Chromium --proxy-server doesn't support auth in URL
+  // Auth is handled via page.authenticate for HTTP proxies
   return `${protocol}://${host}:${port}`;
 }
 

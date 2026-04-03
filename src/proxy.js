@@ -51,3 +51,25 @@ export function createAgent(proxy) {
 export function getNextAgent() {
   return createAgent(getNextProxy());
 }
+
+/**
+ * Get next proxy config suitable for the given engine.
+ * - axios: SOCKS5 (port from proxy.port, protocol socks5)
+ * - puppeteer: HTTP (port from proxy.http_port or proxy.port, protocol http)
+ * - fetch: null (no proxy support in undici)
+ */
+export function getNextProxyForEngine(engine) {
+  if (engine === 'fetch') return null; // undici can't proxy
+  const p = getNextProxy();
+  if (!p) return null;
+
+  if (engine === 'puppeteer') {
+    // Puppeteer needs HTTP proxy, not SOCKS5
+    // proxies.json may have http_port alongside socks5 port
+    const httpPort = p.http_port || p.port;
+    return { protocol: 'http', host: p.host, port: httpPort, user: p.user, pass: p.pass };
+  }
+
+  // axios — use as-is (socks5)
+  return p;
+}

@@ -1,24 +1,23 @@
 services:
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    # No host port — internal only, avoids conflict with scraper redis instances
     volumes:
       - redis-data:/data
     command: >
       redis-server
       --appendonly yes
       --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory-policy noeviction
 
   api:
     build: .
     ports:
-      - "3000:3000"
+      - "3100:3100"
     environment:
       ROLE: api
       REDIS_HOST: redis
-      PORT: 3000
+      PORT: 3100
       RESULT_TTL: 3600
     depends_on:
       - redis
@@ -29,6 +28,7 @@ services:
     environment:
       ROLE: worker
       REDIS_HOST: redis
+      NODE_EXTRA_CA_CERTS: /etc/ssl/certs/ca-certificates.crt
       CONCURRENCY_PER_HOST: 5
       MAX_RATE_PER_HOST: 10
       RATE_DURATION: 1000
@@ -36,9 +36,8 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-    # Mount proxies if you have them
-    # volumes:
-    #   - ./data:/app/data
+    volumes:
+      - ./data:/app/data
     deploy:
       replicas: 2
 
