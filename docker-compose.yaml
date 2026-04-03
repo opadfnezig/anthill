@@ -1,0 +1,46 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      ROLE: api
+      REDIS_HOST: redis
+      PORT: 3000
+      RESULT_TTL: 3600
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  worker:
+    build: .
+    environment:
+      ROLE: worker
+      REDIS_HOST: redis
+      CONCURRENCY_PER_HOST: 5
+      MAX_RATE_PER_HOST: 10
+      RATE_DURATION: 1000
+      RESULT_TTL: 3600
+    depends_on:
+      - redis
+    restart: unless-stopped
+    # Mount proxies if you have them
+    # volumes:
+    #   - ./data:/app/data
+    deploy:
+      replicas: 2
+
+volumes:
+  redis-data:

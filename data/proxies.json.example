@@ -1,0 +1,4 @@
+[
+  { "protocol": "socks5", "host": "proxy1.example.com", "port": 19010, "user": "user", "pass": "pass" },
+  { "protocol": "socks5", "host": "proxy2.example.com", "port": 19010, "user": "user", "pass": "pass" }
+]
